@@ -5,7 +5,7 @@ import { ClerkProvider, Show, UserButton, useUser as useClerkUser, useAuth as us
 import { useFinanceStore } from '../store/financeStore'
 
 // Check if Clerk publishable key is defined and not a placeholder
-const isClerkConfigured = 
+export const isClerkConfigured = 
   !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
   !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes('xxxxxx')
 

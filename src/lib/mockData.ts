@@ -70,8 +70,8 @@ export interface ReceiptMock {
 
 export const DEMO_USER: UserMock = {
   id: 'user_demo_123',
-  name: 'Alex Mercer',
-  email: 'alex.mercer@finpilot.ai',
+  name: 'Charmi Sutariya',
+  email: 'sutariyacharmi74@gmail.com',
   image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256&h=256',
   createdAt: new Date('2026-01-01T00:00:00.000Z').toISOString(),
 };
@@ -81,7 +81,7 @@ export const DEMO_ACCOUNTS: AccountMock[] = [
     id: 'acc_checking',
     userId: DEMO_USER.id,
     type: 'Checking',
-    balance: 5420.50,
+    balance: 1100,
     interestRate: 0.01,
     accountNumber: '•••• 4321',
   },
@@ -89,7 +89,7 @@ export const DEMO_ACCOUNTS: AccountMock[] = [
     id: 'acc_savings',
     userId: DEMO_USER.id,
     type: 'Savings',
-    balance: 24500.00,
+    balance: 6800,
     interestRate: 4.25, // High-yield Savings Account
     accountNumber: '•••• 8765',
   },
@@ -97,18 +97,18 @@ export const DEMO_ACCOUNTS: AccountMock[] = [
     id: 'acc_credit',
     userId: DEMO_USER.id,
     type: 'Credit Card',
-    balance: -1240.80, // Negative means balance owed
+    balance: 350, // Negative means balance owed
     interestRate: 18.99,
     accountNumber: '•••• 9876',
   },
 ];
 
 export const DEMO_BUDGETS: BudgetMock[] = [
-  { id: 'b_food', userId: DEMO_USER.id, category: 'Food', limit: 600, spent: 485.50 },
-  { id: 'b_shopping', userId: DEMO_USER.id, category: 'Shopping', limit: 400, spent: 390.20 },
-  { id: 'b_entertainment', userId: DEMO_USER.id, category: 'Entertainment', limit: 200, spent: 85.00 },
-  { id: 'b_transportation', userId: DEMO_USER.id, category: 'Transportation', limit: 250, spent: 180.40 },
-  { id: 'b_utilities', userId: DEMO_USER.id, category: 'Bills', limit: 500, spent: 450.00 },
+  { id: 'b_food', userId: DEMO_USER.id, category: 'Food', limit: 300, spent: 235.50 },
+  { id: 'b_shopping', userId: DEMO_USER.id, category: 'Shopping', limit: 50, spent: 20 },
+  { id: 'b_entertainment', userId: DEMO_USER.id, category: 'Entertainment', limit: 20, spent: 0 },
+  { id: 'b_transportation', userId: DEMO_USER.id, category: 'Transportation', limit: 50, spent: 40 },
+  { id: 'b_utilities', userId: DEMO_USER.id, category: 'Bills', limit: 200, spent: 100.00 },
 ];
 
 export const DEMO_GOALS: GoalMock[] = [
@@ -116,8 +116,8 @@ export const DEMO_GOALS: GoalMock[] = [
     id: 'g_emergency',
     userId: DEMO_USER.id,
     name: 'Emergency Fund',
-    targetAmount: 15000,
-    currentAmount: 10000,
+    targetAmount: 1000,
+    currentAmount: 100,
     deadline: new Date('2026-12-31').toISOString(),
   },
   {
@@ -125,15 +125,15 @@ export const DEMO_GOALS: GoalMock[] = [
     userId: DEMO_USER.id,
     name: 'Japan Trip',
     targetAmount: 6000,
-    currentAmount: 3200,
+    currentAmount: 2000,
     deadline: new Date('2027-04-15').toISOString(),
   },
   {
-    id: 'g_laptop',
+    id: 'college_fund',
     userId: DEMO_USER.id,
-    name: 'New Laptop',
-    targetAmount: 2500,
-    currentAmount: 2000,
+    name: 'College fund',
+    targetAmount: 17000,
+    currentAmount: 6000,
     deadline: new Date('2026-08-31').toISOString(),
   },
 ];

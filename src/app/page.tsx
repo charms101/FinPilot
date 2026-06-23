@@ -22,7 +22,7 @@ import {
   X,
   Sparkles
 } from 'lucide-react'
-import { useAppAuth, useMockAuth } from '@/components/AuthProvider'
+import { useAppAuth, useMockAuth, isClerkConfigured } from '@/components/AuthProvider'
 
 // Feature item type
 interface FeatureItem {
@@ -49,6 +49,14 @@ export default function LandingPage() {
       router.push('/dashboard')
     }
   }, [isSignedIn, router])
+
+  const handleAuthAction = () => {
+    if (isClerkConfigured) {
+      router.push('/login')
+    } else {
+      setShowLoginModal(true)
+    }
+  }
 
   const handleGuestLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,13 +127,7 @@ export default function LandingPage() {
   ]
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden font-sans selection:bg-blue-600 selection:text-white">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none overflow-hidden z-0 opacity-30">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] aspect-square rounded-full bg-blue-600/20 blur-[120px]" />
-        <div className="absolute top-[10%] right-[-10%] w-[50%] aspect-square rounded-full bg-purple-600/20 blur-[120px]" />
-      </div>
-
+    <div className="flex flex-col min-h-screen bg-black text-slate-100 overflow-x-hidden font-sans selection:bg-blue-600 selection:text-white">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-slate-800/60 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -148,13 +150,13 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-4">
             <button
-              onClick={() => setShowLoginModal(true)}
+              onClick={handleAuthAction}
               className="text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-1.5"
             >
               Login
             </button>
             <button
-              onClick={() => setShowLoginModal(true)}
+              onClick={handleAuthAction}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium text-sm px-4 py-2 rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 hover:scale-102"
             >
               Get Started
@@ -206,7 +208,7 @@ export default function LandingPage() {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false)
-                  setShowLoginModal(true)
+                  handleAuthAction()
                 }}
                 className="text-slate-300 hover:text-white py-2"
               >
@@ -215,7 +217,7 @@ export default function LandingPage() {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false)
-                  setShowLoginModal(true)
+                  handleAuthAction()
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition-all"
               >
@@ -249,7 +251,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
             <button
-              onClick={() => setShowLoginModal(true)}
+              onClick={handleAuthAction}
               className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 group shadow-xl shadow-blue-600/20 hover:scale-102"
             >
               Start Free <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -268,7 +270,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-16 md:mt-24 relative max-w-5xl mx-auto rounded-2xl border border-slate-800/80 bg-slate-950/40 p-4 md:p-6 shadow-2xl shadow-blue-500/5 overflow-hidden"
+          className="mt-16 md:mt-24 relative max-w-5xl mx-auto rounded-2xl border border-slate-900 bg-zinc-950/40 p-4 md:p-6 overflow-hidden"
         >
           {/* Glass header bar */}
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-6">
@@ -349,7 +351,7 @@ export default function LandingPage() {
               key={idx}
               className="bg-slate-900/30 border border-slate-850 p-6 rounded-2xl hover:border-slate-800 transition-colors flex flex-col gap-4 text-left"
             >
-              <div className="bg-slate-950 p-3 rounded-xl w-fit border border-slate-850">
+              <div className="bg-black p-3 rounded-xl w-fit border border-slate-900">
                 {feat.icon}
               </div>
               <h3 className="text-lg font-bold text-slate-100">{feat.title}</h3>
@@ -376,7 +378,7 @@ export default function LandingPage() {
                   className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
                     activeTab === 'dashboard'
                       ? 'bg-blue-950/20 border-blue-500/40 text-blue-400'
-                      : 'bg-slate-950/40 border-slate-850 text-slate-400 hover:border-slate-800'
+                      : 'bg-black border-slate-900 text-slate-400 hover:border-slate-800'
                   }`}
                 >
                   <Activity className="w-5 h-5" />
@@ -385,13 +387,13 @@ export default function LandingPage() {
                     <p className="text-xs text-slate-500 font-light mt-0.5">Visualize income flows, net worth adjustments and budget alerts.</p>
                   </div>
                 </button>
-
+ 
                 <button
                   onClick={() => setActiveTab('ai')}
                   className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
                     activeTab === 'ai'
                       ? 'bg-blue-950/20 border-blue-500/40 text-blue-400'
-                      : 'bg-slate-950/40 border-slate-850 text-slate-400 hover:border-slate-800'
+                      : 'bg-black border-slate-900 text-slate-400 hover:border-slate-800'
                   }`}
                 >
                   <Brain className="w-5 h-5" />
@@ -400,13 +402,13 @@ export default function LandingPage() {
                     <p className="text-xs text-slate-500 font-light mt-0.5">Ask questions about food costs, subscriptions, and savings.</p>
                   </div>
                 </button>
-
+ 
                 <button
                   onClick={() => setActiveTab('scanner')}
                   className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
                     activeTab === 'scanner'
                       ? 'bg-blue-950/20 border-blue-500/40 text-blue-400'
-                      : 'bg-slate-950/40 border-slate-850 text-slate-400 hover:border-slate-800'
+                      : 'bg-black border-slate-900 text-slate-400 hover:border-slate-800'
                   }`}
                 >
                   <Scan className="w-5 h-5" />
@@ -417,9 +419,8 @@ export default function LandingPage() {
                 </button>
               </div>
             </div>
-
-            <div className="lg:col-span-7 bg-slate-950 border border-slate-850 rounded-2xl p-6 h-[400px] flex flex-col relative overflow-hidden">
-              <div className="absolute inset-0 bg-radial-gradient from-blue-500/5 to-transparent pointer-events-none" />
+ 
+            <div className="lg:col-span-7 bg-black border border-slate-900 rounded-2xl p-6 h-[400px] flex flex-col relative overflow-hidden">
               
               <AnimatePresence mode="wait">
                 {activeTab === 'dashboard' && (
@@ -570,7 +571,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-900 bg-slate-950 py-12 text-slate-500 text-xs">
+      <footer className="mt-auto border-t border-slate-900 bg-black py-12 text-slate-500 text-xs">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-1.5 rounded-lg">
@@ -606,7 +607,7 @@ export default function LandingPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl z-10 text-left"
+              className="relative w-full max-w-md bg-black border border-slate-800 rounded-2xl p-6 shadow-2xl z-10 text-left"
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -637,7 +638,7 @@ export default function LandingPage() {
                     value={loginName}
                     onChange={(e) => setLoginName(e.target.value)}
                     placeholder="Alex Mercer"
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="bg-black border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
@@ -650,7 +651,7 @@ export default function LandingPage() {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="alex.mercer@finpilot.ai"
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="bg-black border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
