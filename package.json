@@ -1,50 +1,31 @@
 {
-  "name": "agitated-franklin",
+  "name": "finpilot",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.5.7",
-    "@hookform/resolvers": "^5.4.0",
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.21.0",
     "next": "16.2.9",
-    "openai": "^6.44.0",
-    "pdfkit": "^0.19.1",
-    "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-hook-form": "^7.80.0",
     "recharts": "^3.9.0",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.6.0",
-    "tesseract.js": "^7.0.0",
-    "zod": "^4.4.3",
-    "zustand": "^5.0.14"
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/pdfkit": "^0.17.6",
-    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
-    "prisma": "^7.8.0",
     "tailwindcss": "^4",
-    "ts-node": "^10.9.2",
     "typescript": "^5"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
 }
