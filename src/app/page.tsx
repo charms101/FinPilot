@@ -9,12 +9,23 @@ import {
   Download,
   LineChart,
   Moon,
+  PiggyBank,
   ShieldCheck,
   Sparkles,
   Sun,
+  Upload,
   WalletCards,
 } from 'lucide-react'
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTheme } from '@/components/ThemeProvider'
+import {
+  currentSavingsRate,
+  discretionaryIncome,
+  healthLabel,
+  healthScore,
+  simulatedTransactions,
+  spendingByCategory,
+} from '@/lib/calculations'
 import {
   defaultProfile,
   type DebtType,
@@ -25,6 +36,7 @@ import {
   type SavingsHabit,
   type SpendingCategory,
 } from '@/lib/profile'
+import { formatCurrency } from '@/lib/utils'
 
 type Screen = 'landing' | 'questions' | 'dashboard' | 'playbook' | 'future'
 
@@ -217,7 +229,16 @@ export default function FinPilotSimulation() {
             onComplete={() => setCurrentScreen('dashboard')}
           />
         )}
-        {currentScreen === 'dashboard' && <DashboardScreen />}
+        {currentScreen === 'dashboard' && (
+          <DashboardScreen
+            profile={profile}
+            onImport={(nextProfile) => {
+              setProfile(nextProfile)
+              setCurrentScreen('dashboard')
+            }}
+            onPlaybook={() => setCurrentScreen('playbook')}
+          />
+        )}
         {currentScreen === 'playbook' && <PlaybookScreen />}
         {currentScreen === 'future' && <FutureScreen />}
 
@@ -630,14 +651,211 @@ function SelectQuestion<TValue extends string>({
   )
 }
 
-function DashboardScreen() {
+function DashboardScreen({
+  profile,
+  onImport,
+  onPlaybook,
+}: {
+  profile: Profile
+  onImport: (profile: Profile) => void
+  onPlaybook: () => void
+}) {
+  const discretionary = discretionaryIncome(profile)
+  const savings = currentSavingsRate(profile)
+  const score = healthScore(profile)
+  const transactions = simulatedTransactions(profile)
+  const spendingData = spendingByCategory(profile)
+  const endOfMonthSavings = Math.max(savings, 0)
+  const checkingBalance = discretionary
+  const chartSummary =
+    spendingData.length > 0
+      ? spendingData.map((item) => `${item.category}: ${formatCurrency(item.amount)}`).join(', ')
+      : 'No simulated spending yet.'
+
+  const downloadSnapshot = () => {
+    const computedResults = {
+      discretionaryIncome: discretionary,
+      currentSavingsRate: savings,
+      healthScore: score,
+      simulatedTransactions: transactions,
+      spendingByCategory: spendingData,
+    }
+    const blob = new Blob([JSON.stringify({ profile, computedResults }, null, 2)], {
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'finpilot-snapshot.json'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const importSnapshot = async (file: File | undefined) => {
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text) as { profile?: Partial<Profile> }
+
+      if (parsed.profile) {
+        onImport({ ...defaultProfile, ...parsed.profile })
+      }
+    } catch {
+      window.alert('That snapshot could not be imported. Please choose a FinPilot JSON export.')
+    }
+  }
+
   return (
-    <PlaceholderPanel
-      icon={BarChart3}
-      title="Your dashboard"
-      body="The next dashboard increment will show simulated checking, savings, spending charts, and export/import controls."
-      detail="No real bank linking will be added."
-    />
+    <div className="grid gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Your dashboard</p>
+          <h2 className="mt-2 text-3xl font-semibold">A simulated bank-app view of your month</h2>
+          <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
+            These figures are estimates from your answers. This is a simulation and does not connect to real accounts.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-900">
+            <Upload className="size-4" />
+            Import a snapshot
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(event) => void importSnapshot(event.target.files?.[0])}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={downloadSnapshot}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white transition hover:bg-emerald-700"
+          >
+            <Download className="size-4" />
+            Download your snapshot
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr_0.72fr]">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Simulated checking</p>
+              <p className="mt-2 text-3xl font-semibold">{formatCurrency(checkingBalance)}</p>
+            </div>
+            <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+              <WalletCards className="size-5" />
+            </span>
+          </div>
+          <div className="space-y-3">
+            {transactions.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+                <span className="text-sm text-slate-600 dark:text-slate-300">{transaction.label}</span>
+                <span className="font-medium">-{formatCurrency(transaction.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Simulated savings</p>
+              <p className="mt-2 text-3xl font-semibold">{formatCurrency(endOfMonthSavings)}</p>
+            </div>
+            <span className="grid size-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300">
+              <PiggyBank className="size-5" />
+            </span>
+          </div>
+          <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <span>Estimated monthly saving</span>
+              <span className="font-medium text-slate-950 dark:text-white">{formatCurrency(savings)}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <span>End-of-month balance</span>
+              <span className="font-medium text-slate-950 dark:text-white">{formatCurrency(endOfMonthSavings)}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <span>Estimated leftover</span>
+              <span className="font-medium text-slate-950 dark:text-white">
+                {formatCurrency(Math.max(discretionary - transactions.reduce((total, item) => total + item.amount, 0) - savings, 0))}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Financial mirror score</p>
+          <div className="mt-4 flex items-end gap-3">
+            <p className="text-5xl font-semibold">{score}</p>
+            <p className="pb-2 text-sm text-slate-500 dark:text-slate-400">/ 100</p>
+          </div>
+          <p className="mt-3 inline-flex rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+            {healthLabel(score)}
+          </p>
+          <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            Encouraging by design: the score points toward habits you can adjust, not a judgment of your money life.
+          </p>
+        </section>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold">Spending by category</h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Simulated from the categories you selected.</p>
+          </div>
+          <div className="h-72" aria-hidden="true">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={spendingData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                <XAxis dataKey="category" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value}`} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Bar dataKey="amount" fill="#059669" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Chart summary: {chartSummary}</p>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="text-xl font-semibold">Month snapshot</h3>
+          <dl className="mt-4 grid gap-3 text-sm">
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <dt className="text-slate-500 dark:text-slate-400">Take-home income</dt>
+              <dd className="font-medium">{formatCurrency(profile.monthlyIncome)}</dd>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <dt className="text-slate-500 dark:text-slate-400">Housing</dt>
+              <dd className="font-medium">{formatCurrency(profile.housingCost)}</dd>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <dt className="text-slate-500 dark:text-slate-400">Fixed bills</dt>
+              <dd className="font-medium">{formatCurrency(profile.otherFixedBills)}</dd>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <dt className="text-slate-500 dark:text-slate-400">Debt minimum</dt>
+              <dd className="font-medium">{formatCurrency(profile.debtMinPayment)}</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            onClick={onPlaybook}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+          >
+            See your playbook
+            <ArrowRight className="size-4" />
+          </button>
+        </section>
+      </div>
+
+      <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        This app is an educational simulation. It is not a bank, is not FDIC-insured, and does not move real money.
+      </p>
+    </div>
   )
 }
 
