@@ -16,13 +16,27 @@ import {
   Upload,
   WalletCards,
 } from 'lucide-react'
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart as RechartsLineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { useTheme } from '@/components/ThemeProvider'
 import {
   currentSavingsRate,
   discretionaryIncome,
+  estimatedPlaybookLift,
+  futureValue,
   healthLabel,
   healthScore,
+  projectionData,
   simulatedTransactions,
   spendingByCategory,
 } from '@/lib/calculations'
@@ -247,7 +261,7 @@ export default function FinPilotSimulation() {
             onFuture={() => setCurrentScreen('future')}
           />
         )}
-        {currentScreen === 'future' && <FutureScreen />}
+        {currentScreen === 'future' && <FutureScreen profile={profile} onPlaybook={() => setCurrentScreen('playbook')} />}
 
         <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>{disclaimer}</p>
@@ -951,44 +965,122 @@ function PlaybookScreen({
   )
 }
 
-function FutureScreen() {
-  return (
-    <PlaceholderPanel
-      icon={LineChart}
-      title="Future you"
-      body="Projection math and a responsive chart will land after the calculations layer."
-      detail="A simplified projection, not a guarantee."
-    />
-  )
-}
+function FutureScreen({ profile, onPlaybook }: { profile: Profile; onPlaybook: () => void }) {
+  const [years, setYears] = useState(10)
+  const savings = currentSavingsRate(profile)
+  const lift = estimatedPlaybookLift(profile)
+  const data = projectionData(profile, years)
+  const currentTotal = futureValue(savings, 5, years)
+  const optimizedTotal = futureValue(savings + lift, 7, years)
+  const difference = Math.max(optimizedTotal - currentTotal, 0)
+  const targetYear = new Date().getFullYear() + years
+  const chartSummary = `At ${years} years, the current path is about ${formatCurrency(
+    Math.round(currentTotal),
+  )}, while the playbook path is about ${formatCurrency(Math.round(optimizedTotal))}.`
 
-function PlaceholderPanel({
-  icon: Icon,
-  title,
-  body,
-  detail,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  title: string
-  body: string
-  detail: string
-}) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="grid size-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-          <Icon className="size-5" />
-        </span>
+    <div className="grid gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">{title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Simulation screen</p>
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Future you</p>
+          <h2 className="mt-2 text-3xl font-semibold">A simple projection of what could change</h2>
+          <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
+            This compares your current savings habit with an optimized path based on the playbook lift.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={onPlaybook}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-900"
+        >
+          <BookOpen className="size-4" />
+          View playbook
+        </button>
       </div>
-      <p className="max-w-2xl text-slate-600 dark:text-slate-300">{body}</p>
-      <div className="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-        <Download className="size-4" />
-        {detail}
-      </div>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Current monthly saving</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(savings)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Estimated playbook lift</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(lift)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Optimized monthly saving</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(savings + lift)}</p>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold">Projection horizon</h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Monthly compounding with 5% and 7% annual assumptions.</p>
+          </div>
+          <div className="grid grid-cols-4 gap-2 rounded-lg bg-slate-100 p-1 dark:bg-slate-950" aria-label="Projection years">
+            {[1, 5, 10, 20].map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setYears(option)}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                  years === option
+                    ? 'bg-white text-emerald-700 shadow-sm dark:bg-slate-800 dark:text-emerald-300'
+                    : 'text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white'
+                }`}
+              >
+                {option}y
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-80" aria-hidden="true">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsLineChart data={data} margin={{ top: 10, right: 18, left: 0, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.25} />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                fontSize={12}
+                tickFormatter={(value) => `$${Number(value).toLocaleString()}`}
+              />
+              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="currentPath"
+                name="Current path"
+                stroke="#0891b2"
+                strokeWidth={3}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="optimizedPath"
+                name="Playbook path"
+                stroke="#059669"
+                strokeWidth={3}
+                dot={false}
+              />
+            </RechartsLineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="mt-5 grid gap-3 text-sm text-slate-600 dark:text-slate-300">
+          <p>{chartSummary}</p>
+          <p>
+            If you follow the playbook, you could have roughly {formatCurrency(Math.round(difference))} more by {targetYear} than if nothing changes. A simplified projection, not a guarantee.
+          </p>
+        </div>
+      </section>
+
+      <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        Nothing here is personalized financial, investment, tax, or legal advice. Consult a licensed professional for decisions specific to your situation.
+      </p>
     </div>
   )
 }

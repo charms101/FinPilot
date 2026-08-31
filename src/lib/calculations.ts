@@ -95,3 +95,46 @@ export function spendingByCategory(profile: Profile) {
     amount,
   }))
 }
+
+export function futureValue(monthlyContribution: number, annualRatePct: number, years: number) {
+  const contribution = cleanAmount(monthlyContribution)
+  const r = annualRatePct / 100 / 12
+  const n = years * 12
+
+  if (r === 0) {
+    return contribution * n
+  }
+
+  return contribution * ((Math.pow(1 + r, n) - 1) / r)
+}
+
+export function estimatedPlaybookLift(profile: Profile) {
+  const discretionary = Math.max(discretionaryIncome(profile), 0)
+  let lift = 0
+
+  if (profile.hasDebt && profile.debtType !== 'none') {
+    lift += discretionary * 0.1
+  }
+
+  if (profile.currentSavingsHabit === 'none' && profile.primaryGoal !== 'pay_off_debt') {
+    lift += discretionary * 0.05
+  }
+
+  if (profile.topSpendingCategories.includes('shopping') || profile.topSpendingCategories.includes('dining')) {
+    lift += discretionary * 0.05
+  }
+
+  return Math.min(lift, discretionary * 0.5)
+}
+
+export function projectionData(profile: Profile, years: number) {
+  const savings = currentSavingsRate(profile)
+  const optimizedSavings = savings + estimatedPlaybookLift(profile)
+
+  return Array.from({ length: years + 1 }, (_, index) => ({
+    year: index,
+    label: index === 0 ? 'Today' : `Year ${index}`,
+    currentPath: Math.round(futureValue(savings, 5, index)),
+    optimizedPath: Math.round(futureValue(optimizedSavings, 7, index)),
+  }))
+}
