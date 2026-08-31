@@ -45,6 +45,7 @@ import {
 } from '@/lib/calculations'
 import {
   defaultProfile,
+  normalizeProfile,
   type DebtType,
   type IncomeType,
   type PrimaryGoal,
@@ -132,7 +133,7 @@ function loadStoredProfile() {
       return defaultProfile
     }
 
-    return { ...defaultProfile, ...JSON.parse(savedProfile) } as Profile
+    return normalizeProfile(JSON.parse(savedProfile))
   } catch {
     return defaultProfile
   }
@@ -737,7 +738,7 @@ function DashboardScreen({
       const parsed = JSON.parse(text) as { profile?: Partial<Profile> }
 
       if (parsed.profile) {
-        onImport({ ...defaultProfile, ...parsed.profile })
+        onImport(normalizeProfile(parsed.profile))
       }
     } catch {
       window.alert('That snapshot could not be imported. Please choose a FinPilot JSON export.')

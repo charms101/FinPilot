@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "smoke": "tsc scripts/smoke-calculations.ts src/lib/calculations.ts src/lib/playbook.ts src/lib/profile.ts --outDir /tmp/finpilot-smoke --module commonjs --target ES2022 --skipLibCheck --esModuleInterop --moduleResolution node --noEmit false && node /tmp/finpilot-smoke/scripts/smoke-calculations.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
