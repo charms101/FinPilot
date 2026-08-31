@@ -57,6 +57,11 @@ Open `http://localhost:4173`.
 
 FinPilot can deploy as a static site to Vercel, Netlify, or GitHub Pages.
 
+GitHub Pages workflow:
+- `.github/workflows/deploy-pages.yml` runs on pushes to `master`
+- The workflow runs lint, smoke tests, and static export
+- The workflow publishes the `out/` directory with GitHub Pages
+
 Vercel:
 - Framework preset: Next.js
 - Build command: `npm run build`
@@ -69,6 +74,7 @@ Netlify:
 GitHub Pages:
 - Build with `npm run build`
 - Publish the `out/` directory
+- Or enable GitHub Pages for GitHub Actions and use the included workflow
 
 ## QA Checklist
 
