@@ -7,7 +7,9 @@ import {
   BarChart3,
   BookOpen,
   Download,
+  Info,
   LineChart,
+  LockKeyhole,
   Moon,
   PiggyBank,
   ShieldCheck,
@@ -15,6 +17,7 @@ import {
   Sun,
   Upload,
   WalletCards,
+  X,
 } from 'lucide-react'
 import {
   Bar,
@@ -142,6 +145,7 @@ function moneyValue(value: number) {
 export default function FinPilotSimulation() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing')
   const [profile, setProfile] = useState<Profile>(loadStoredProfile)
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
 
   const currentIndex = useMemo(
@@ -198,15 +202,26 @@ export default function FinPilotSimulation() {
             })}
           </nav>
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAboutOpen(true)}
+              className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+              aria-label="Open about panel"
+              title="About this simulation"
+            >
+              <Info className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -287,6 +302,8 @@ export default function FinPilotSimulation() {
           </div>
         </div>
       </section>
+
+      {isAboutOpen && <AboutPanel onClose={() => setIsAboutOpen(false)} />}
     </main>
   )
 }
@@ -873,6 +890,45 @@ function DashboardScreen({
         </section>
       </div>
 
+      <section className="grid gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300">
+              <LockKeyhole className="size-5" />
+            </span>
+            <div>
+              <h3 className="text-xl font-semibold">Save & export</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Move your snapshot yourself with a JSON file.</p>
+            </div>
+          </div>
+          <ul className="grid gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <li>All figures you enter stay in your browser.</li>
+            <li>Nothing is sent to a server unless you choose to export a file yourself.</li>
+            <li>No cookies, real bank linking, login, or analytics capture financial figures.</li>
+          </ul>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-950">
+            <Upload className="size-4" />
+            Import a snapshot
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(event) => void importSnapshot(event.target.files?.[0])}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={downloadSnapshot}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white transition hover:bg-emerald-700"
+          >
+            <Download className="size-4" />
+            Download your snapshot
+          </button>
+        </div>
+      </section>
+
       <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         This app is an educational simulation. It is not a bank, is not FDIC-insured, and does not move real money.
       </p>
@@ -1081,6 +1137,62 @@ function FutureScreen({ profile, onPlaybook }: { profile: Profile; onPlaybook: (
       <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         Nothing here is personalized financial, investment, tax, or legal advice. Consult a licensed professional for decisions specific to your situation.
       </p>
+    </div>
+  )
+}
+
+function AboutPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="about-title"
+    >
+      <section className="max-h-full w-full max-w-2xl overflow-auto rounded-lg border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+              <ShieldCheck className="size-5" />
+            </span>
+            <div>
+              <h2 id="about-title" className="text-2xl font-semibold">
+                About FinPilot
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">A private educational simulation.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid size-9 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-950"
+            aria-label="Close about panel"
+            title="Close"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="grid gap-3 text-slate-600 dark:text-slate-300">
+          <p className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950">
+            This app is an educational simulation. It is not a bank, is not FDIC-insured, and does not move real money.
+          </p>
+          <p className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950">
+            Nothing here is personalized financial, investment, tax, or legal advice. Consult a licensed professional for decisions specific to your situation.
+          </p>
+          <p className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950">
+            All figures you enter stay in your browser. Nothing is sent to a server unless you choose to export a file yourself.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700"
+        >
+          Back to FinPilot
+        </button>
+      </section>
     </div>
   )
 }
