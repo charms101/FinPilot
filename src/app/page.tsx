@@ -36,6 +36,7 @@ import {
   type SavingsHabit,
   type SpendingCategory,
 } from '@/lib/profile'
+import { matchingPlaybookRules } from '@/lib/playbook'
 import { formatCurrency } from '@/lib/utils'
 
 type Screen = 'landing' | 'questions' | 'dashboard' | 'playbook' | 'future'
@@ -239,7 +240,13 @@ export default function FinPilotSimulation() {
             onPlaybook={() => setCurrentScreen('playbook')}
           />
         )}
-        {currentScreen === 'playbook' && <PlaybookScreen />}
+        {currentScreen === 'playbook' && (
+          <PlaybookScreen
+            profile={profile}
+            onDashboard={() => setCurrentScreen('dashboard')}
+            onFuture={() => setCurrentScreen('future')}
+          />
+        )}
         {currentScreen === 'future' && <FutureScreen />}
 
         <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
@@ -859,14 +866,88 @@ function DashboardScreen({
   )
 }
 
-function PlaybookScreen() {
+function PlaybookScreen({
+  profile,
+  onDashboard,
+  onFuture,
+}: {
+  profile: Profile
+  onDashboard: () => void
+  onFuture: () => void
+}) {
+  const rules = matchingPlaybookRules(profile)
+  const discretionary = discretionaryIncome(profile)
+
   return (
-    <PlaceholderPanel
-      icon={BookOpen}
-      title="Your playbook"
-      body="Rules will live as data and render only when their conditions match the current profile."
-      detail="Every tip will stay educational, not advisory."
-    />
+    <div className="grid gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Your playbook</p>
+          <h2 className="mt-2 text-3xl font-semibold">A few principles that match your snapshot</h2>
+          <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
+            These book-inspired prompts are general education only. They are here to help you think clearly, not to tell you what to do.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onFuture}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white transition hover:bg-emerald-700"
+        >
+          See future you
+          <ArrowRight className="size-4" />
+        </button>
+      </div>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Monthly income</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(profile.monthlyIncome)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Discretionary estimate</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(discretionary)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Rules matched</p>
+          <p className="mt-2 text-2xl font-semibold">{rules.length}</p>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        {rules.map((rule) => (
+          <article
+            key={`${rule.book}-${rule.principle}`}
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div className="mb-5 flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                <BookOpen className="size-5" />
+              </span>
+              <div>
+                <h3 className="text-xl font-semibold">{rule.book}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{rule.author}</p>
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{rule.principle}</p>
+            <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">{rule.tip}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 md:grid-cols-[1fr_auto] md:items-center">
+        <p>
+          These are general educational principles, not personalized financial advice. Nothing here is personalized financial, investment, tax, or legal advice.
+        </p>
+        <button
+          type="button"
+          onClick={onDashboard}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-950"
+        >
+          <ArrowLeft className="size-4" />
+          Back to dashboard
+        </button>
+      </section>
+    </div>
   )
 }
 
