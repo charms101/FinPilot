@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FinPilot
 
-## Getting Started
+FinPilot is a browser-only educational finance simulation. It does not have login, account linking, a backend server, analytics, cookies, database storage, or real money movement.
 
-First, run the development server:
+## What It Does
+
+- Landing screen with clear simulation and privacy copy
+- Multi-step profile questions with inline validation
+- Dashboard with simulated checking, savings, health score, and spending chart
+- Data-driven financial playbook cards
+- Future You projection chart with 1, 5, 10, and 20 year horizons
+- JSON snapshot export/import for moving data manually between devices
+- Light and dark mode
+
+## Privacy Model
+
+All user-entered figures are stored in `localStorage` in the browser. Exporting creates a JSON file locally with a Blob download. Importing reads a user-selected JSON file back into browser state.
+
+There are no server calls for financial figures, no bank-linking SDKs, no auth provider, no database, and no environment variables or secrets required.
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Verification
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run smoke
+npm run build
+```
 
-## Learn More
+`npm run smoke` checks five representative profiles, malformed imported data, score bounds, projections, simulated spending, and playbook matching.
 
-To learn more about Next.js, take a look at the following resources:
+## Static Export
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The static site is written to `out/`.
 
-## Deploy on Vercel
+Preview the export locally:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+python3 -m http.server 4173 --directory out
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open `http://localhost:4173`.
+
+## Deployment
+
+FinPilot can deploy as a static site to Vercel, Netlify, or GitHub Pages.
+
+Vercel:
+- Framework preset: Next.js
+- Build command: `npm run build`
+- Output directory: `out`
+
+Netlify:
+- Build command: `npm run build`
+- Publish directory: `out`
+
+GitHub Pages:
+- Build with `npm run build`
+- Publish the `out/` directory
+
+## QA Checklist
+
+- All five screens work without login
+- Landing, dashboard, playbook, future projection, and About panel all state this is a simulation
+- Negative discretionary income shows a clear warning and no `NaN`
+- Income `0`, no debt, max-value inputs, and malformed imports do not crash
+- Dashboard export/import round trip preserves profile data
+- Playbook shows matching rule cards and general-education disclaimer
+- Projection chart shows both current path and playbook path
+- Mobile layout stacks cleanly around 360px width
+- Dark mode remains readable

@@ -70,6 +70,9 @@ const screens: Array<{ id: Screen; label: string; icon: React.ComponentType<{ cl
 const disclaimer =
   'This is an educational simulation, not a real bank, not FDIC-insured, and not personalized financial advice.'
 
+const privacyNotice =
+  'All figures you enter stay in your browser. Nothing is sent to a server unless you choose to export a file yourself.'
+
 const storageKey = 'finpilot-profile'
 
 const incomeTypeOptions: Array<{ value: IncomeType; label: string }> = [
@@ -141,6 +144,16 @@ function loadStoredProfile() {
 
 function moneyValue(value: number) {
   return Number.isFinite(value) ? value : 0
+}
+
+function formatSignedCurrency(value: number) {
+  const amount = Number.isFinite(value) ? value : 0
+
+  if (amount < 0) {
+    return `-${formatCurrency(Math.abs(amount))}`
+  }
+
+  return formatCurrency(amount)
 }
 
 export default function FinPilotSimulation() {
@@ -280,7 +293,9 @@ export default function FinPilotSimulation() {
         {currentScreen === 'future' && <FutureScreen profile={profile} onPlaybook={() => setCurrentScreen('playbook')} />}
 
         <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
-          <p>{disclaimer}</p>
+          <p>
+            {disclaimer} {privacyNotice}
+          </p>
           <div className="flex gap-2">
             <button
               type="button"
@@ -699,6 +714,7 @@ function DashboardScreen({
   onImport: (profile: Profile) => void
   onPlaybook: () => void
 }) {
+  const [importMessage, setImportMessage] = useState('')
   const discretionary = discretionaryIncome(profile)
   const savings = currentSavingsRate(profile)
   const score = healthScore(profile)
@@ -706,6 +722,7 @@ function DashboardScreen({
   const spendingData = spendingByCategory(profile)
   const endOfMonthSavings = Math.max(savings, 0)
   const checkingBalance = discretionary
+  const hasCashFlowGap = discretionary < 0
   const chartSummary =
     spendingData.length > 0
       ? spendingData.map((item) => `${item.category}: ${formatCurrency(item.amount)}`).join(', ')
@@ -739,8 +756,10 @@ function DashboardScreen({
 
       if (parsed.profile) {
         onImport(normalizeProfile(parsed.profile))
+        setImportMessage('Snapshot imported. Your dashboard now reflects that file.')
       }
     } catch {
+      setImportMessage('')
       window.alert('That snapshot could not be imported. Please choose a FinPilot JSON export.')
     }
   }
@@ -763,6 +782,7 @@ function DashboardScreen({
               type="file"
               accept="application/json,.json"
               className="sr-only"
+              aria-label="Import a FinPilot JSON snapshot"
               onChange={(event) => void importSnapshot(event.target.files?.[0])}
             />
           </label>
@@ -776,21 +796,36 @@ function DashboardScreen({
           </button>
         </div>
       </div>
+      {importMessage && (
+        <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" role="status">
+          {importMessage}
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr_0.72fr]">
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">Simulated checking</p>
-              <p className="mt-2 text-3xl font-semibold">{formatCurrency(checkingBalance)}</p>
+              <p className={`mt-2 text-3xl font-semibold ${hasCashFlowGap ? 'text-red-600 dark:text-red-400' : ''}`}>
+                {formatSignedCurrency(checkingBalance)}
+              </p>
             </div>
             <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
               <WalletCards className="size-5" />
             </span>
           </div>
           <div className="space-y-3">
+            {hasCashFlowGap && (
+              <div className="rounded-lg bg-red-50 px-3 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                Your fixed costs are higher than take-home income in this simulation.
+              </div>
+            )}
             {transactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950">
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-950"
+              >
                 <span className="text-sm text-slate-600 dark:text-slate-300">{transaction.label}</span>
                 <span className="font-medium">-{formatCurrency(transaction.amount)}</span>
               </div>
@@ -916,6 +951,7 @@ function DashboardScreen({
               type="file"
               accept="application/json,.json"
               className="sr-only"
+              aria-label="Import a FinPilot JSON snapshot"
               onChange={(event) => void importSnapshot(event.target.files?.[0])}
             />
           </label>
@@ -931,7 +967,7 @@ function DashboardScreen({
       </section>
 
       <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-        This app is an educational simulation. It is not a bank, is not FDIC-insured, and does not move real money.
+        This app is an educational simulation. It is not a bank, is not FDIC-insured, and does not move real money. {privacyNotice}
       </p>
     </div>
   )
@@ -976,7 +1012,9 @@ function PlaybookScreen({
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm text-slate-500 dark:text-slate-400">Discretionary estimate</p>
-          <p className="mt-2 text-2xl font-semibold">{formatCurrency(discretionary)}</p>
+          <p className={`mt-2 text-2xl font-semibold ${discretionary < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
+            {formatSignedCurrency(discretionary)}
+          </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm text-slate-500 dark:text-slate-400">Rules matched</p>
@@ -1143,6 +1181,18 @@ function FutureScreen({ profile, onPlaybook }: { profile: Profile; onPlaybook: (
 }
 
 function AboutPanel({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
