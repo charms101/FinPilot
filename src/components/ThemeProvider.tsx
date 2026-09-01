@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from 'react'
 
 type Theme = 'light' | 'dark'
 
@@ -10,25 +10,40 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
+const themeStorageKey = 'finpilot-theme'
+const themeChangeEvent = 'finpilot-theme-change'
+
+function storedTheme(): Theme {
+  const savedTheme = window.localStorage.getItem(themeStorageKey)
+
+  if (savedTheme === 'light' || savedTheme === 'dark') {
+    return savedTheme
+  }
+
+  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark'
+  }
+
+  return 'light'
+}
+
+function subscribeToThemeChanges(onStoreChange: () => void) {
+  window.addEventListener(themeChangeEvent, onStoreChange)
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onStoreChange)
+
+  return () => {
+    window.removeEventListener(themeChangeEvent, onStoreChange)
+    window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', onStoreChange)
+  }
+}
+
+function setStoredTheme(theme: Theme) {
+  window.localStorage.setItem(themeStorageKey, theme)
+  window.dispatchEvent(new Event(themeChangeEvent))
+}
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') {
-      return 'light'
-    }
-
-    const savedTheme = window.localStorage.getItem('finpilot-theme')
-
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      return savedTheme
-    }
-
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark'
-    }
-
-    return 'light'
-  })
+  const theme = useSyncExternalStore<Theme>(subscribeToThemeChanges, storedTheme, () => 'light')
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -40,14 +55,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.remove('dark')
       root.style.colorScheme = 'light'
     }
-
-    window.localStorage.setItem('finpilot-theme', theme)
   }, [theme])
 
   const value = useMemo(
     () => ({
       theme,
-      toggleTheme: () => setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark')),
+      toggleTheme: () => setStoredTheme(theme === 'dark' ? 'light' : 'dark'),
     }),
     [theme],
   )
