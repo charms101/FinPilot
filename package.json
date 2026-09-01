@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
-    "start": "next start",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build --webpack",
+    "start": "npm run preview:static",
     "lint": "eslint",
+    "acceptance:static": "node scripts/acceptance-static.mjs",
     "preview:static": "python3 -m http.server 4173 --directory out",
     "smoke": "tsc scripts/smoke-calculations.ts src/lib/calculations.ts src/lib/playbook.ts src/lib/profile.ts --outDir /tmp/finpilot-smoke --module commonjs --target ES2022 --skipLibCheck --esModuleInterop --moduleResolution node --noEmit false && node /tmp/finpilot-smoke/scripts/smoke-calculations.js"
   },

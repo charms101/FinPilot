@@ -33,9 +33,11 @@ Open `http://localhost:3000`.
 npm run lint
 npm run smoke
 npm run build
+npm run acceptance:static
 ```
 
 `npm run smoke` checks five representative profiles, malformed imported data, score bounds, projections, simulated spending, and playbook matching.
+`npm run acceptance:static` checks the generated `out/` folder for required public safety copy and verifies backend/auth/bank-linking packages and files are absent.
 
 ## Static Export
 
@@ -59,8 +61,9 @@ FinPilot can deploy as a static site to Vercel, Netlify, or GitHub Pages.
 
 GitHub Pages workflow:
 - `.github/workflows/deploy-pages.yml` runs on pushes to `master`
-- The workflow runs lint, smoke tests, and static export
+- The workflow runs lint, smoke tests, static export, and static acceptance checks
 - The workflow publishes the `out/` directory with GitHub Pages
+- GitHub Actions builds automatically use the repository name as the Next.js base path for project pages
 
 Vercel:
 - Framework preset: Next.js
